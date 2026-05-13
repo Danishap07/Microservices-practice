@@ -44,3 +44,4 @@ curl -X POST localhost:8000/orders -H 'Content-Type: application/json' -d '{"pro
 | Inventory   | 8003 | MongoDB    | Kafka consumer     |
 | Orders      | 8002 | PostgreSQL | Kafka producer     |
 # Microservices-practice
+# Microservices-practice
