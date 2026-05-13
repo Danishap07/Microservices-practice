@@ -3,23 +3,15 @@
 ## Development Setup
 
 ```bash
-# 1. Install all dependencies (root + all workspaces)
-npm install
-
-# 2. Build everything
-make build
-
-# 3. Run tests
-make test
-
-# 4. Start all services with Docker
-make up
+npm run setup     # install deps + build everything
+npm test          # verify everything works
 ```
 
 ## Project Structure
 
 ```
-packages/shared/       ← Shared code (Kafka, Redis, errors, validation)
+packages/shared/       ← Shared code (Kafka, Redis, JWT, errors, validation)
+services/auth/         ← Auth service (port 8001)
 services/api-gateway/  ← API Gateway (port 8000)
 services/inventory/    ← Inventory service (port 8003)
 services/orders/       ← Orders service (port 8002)
@@ -28,12 +20,12 @@ deploy/                ← EC2 deployment scripts
 
 ## Before You Commit
 
-Run these three things to make sure your code is clean:
+Run these three checks:
 
 ```bash
-make lint       # ESLint – catches bugs and style issues (run `npm run lint`)
-make format     # Prettier – auto-formats everything
-make test       # Jest – runs all tests
+npm run lint      # ESLint – catches bugs and style issues
+npm run format    # Prettier – auto-formats everything
+npm test          # Jest – runs all tests
 ```
 
 ## Code Style Guidelines
@@ -52,7 +44,7 @@ make test       # Jest – runs all tests
 2. Add the package name to the root `package.json` workspaces array (already covers `services/*`).
 3. Add the service to `docker-compose.yml`.
 4. If it needs shared code, add a dependency on `@microservices/shared`.
-5. Rebuild: `make build`.
+5. Rebuild: `npm run build`.
 
 ## Commit Messages
 

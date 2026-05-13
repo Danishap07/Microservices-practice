@@ -6,12 +6,16 @@
     "services/*"
   ],
   "scripts": {
+    "setup": "npm install && npm run build",
     "build": "npm run build --workspaces",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "jest",
-    "clean": "rm -rf packages/*/dist services/*/dist"
+    "clean": "rm -rf packages/*/dist services/*/dist",
+    "up": "docker compose up --build",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
