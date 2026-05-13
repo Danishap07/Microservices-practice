@@ -1,0 +1,22 @@
+[Unit]
+Description=Inventory Microservice
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/microservices
+
+# Environment variables — set these per instance
+Environment=PORT=8003
+Environment=MONGO_URI=mongodb://<infra-ip>:27018/inventory_db
+Environment=KAFKA_BROKERS=<infra-ip>:9092
+Environment=REDIS_HOST=<infra-ip>
+
+ExecStart=/usr/bin/node /home/ec2-user/microservices/services/inventory/dist/app.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

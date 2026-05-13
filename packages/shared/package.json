@@ -1,0 +1,19 @@
+{
+  "name": "@microservices/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ioredis": "^5.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^25.3.0",
+    "typescript": "^5.9.3"
+  }
+}

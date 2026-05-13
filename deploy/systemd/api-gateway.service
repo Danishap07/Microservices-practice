@@ -1,0 +1,21 @@
+[Unit]
+Description=API Gateway
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/microservices
+
+# Environment variables — set these per instance
+Environment=PORT=8000
+Environment=INVENTORY_URL=http://<inventory-ec2-ip>:8003
+Environment=ORDERS_URL=http://<orders-ec2-ip>:8002
+
+ExecStart=/usr/bin/node /home/ec2-user/microservices/services/api-gateway/dist/app.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

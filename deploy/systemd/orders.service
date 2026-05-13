@@ -1,0 +1,25 @@
+[Unit]
+Description=Orders Microservice
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/microservices
+
+# Environment variables — set these per instance
+Environment=PORT=8002
+Environment=DB_HOST=<infra-ip>
+Environment=DB_PORT=5434
+Environment=DB_USER=postgres
+Environment=DB_PASSWORD=postgres
+Environment=DB_NAME=orders_db
+Environment=KAFKA_BROKERS=<infra-ip>:9092
+
+ExecStart=/usr/bin/node /home/ec2-user/microservices/services/orders/dist/app.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
