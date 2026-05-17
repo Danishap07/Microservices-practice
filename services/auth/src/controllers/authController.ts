@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { generateToken, BadRequestError, UnauthorizedError } from '@microservices/shared';
+import { generateToken, BadRequestError, UnauthorizedError, logger } from '@microkit/shared';
 
 interface UserRecord {
   id: string;
@@ -8,10 +8,28 @@ interface UserRecord {
   role: 'admin' | 'user';
 }
 
-const users: UserRecord[] = [
-  { id: 'u1', email: 'admin@test.com', password: 'admin123', role: 'admin' },
-  { id: 'u2', email: 'user@test.com', password: 'user123', role: 'user' },
-];
+let users: UserRecord[] = [];
+
+async function hashPassword(password: string): Promise<string> {
+  const { hash } = await import('bcrypt');
+  return hash(password, 10);
+}
+
+async function comparePassword(password: string, hash: string): Promise<boolean> {
+  const { compare } = await import('bcrypt');
+  return compare(password, hash);
+}
+
+async function seedUsers(): Promise<void> {
+  const adminHash = await hashPassword('admin123');
+  const userHash = await hashPassword('user123');
+  users = [
+    { id: 'u1', email: 'admin@test.com', password: adminHash, role: 'admin' },
+    { id: 'u2', email: 'user@test.com', password: userHash, role: 'user' },
+  ];
+  logger.info('Seed users created');
+}
+seedUsers();
 
 export async function register(req: Request, res: Response): Promise<void> {
   const { email, password, role } = req.body;
@@ -23,10 +41,11 @@ export async function register(req: Request, res: Response): Promise<void> {
     throw new BadRequestError('Email already registered');
   }
 
+  const hashedPassword = await hashPassword(password);
   const user: UserRecord = {
     id: `u${Date.now()}`,
     email,
-    password,
+    password: hashedPassword,
     role: role === 'admin' ? 'admin' : 'user',
   };
   users.push(user);
@@ -42,8 +61,8 @@ export async function login(req: Request, res: Response): Promise<void> {
     throw new BadRequestError('Email and password are required');
   }
 
-  const user = users.find((u) => u.email === email && u.password === password);
-  if (!user) {
+  const user = users.find((u) => u.email === email);
+  if (!user || !(await comparePassword(password, user.password))) {
     throw new UnauthorizedError('Invalid email or password');
   }
 

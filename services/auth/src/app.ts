@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import {requestLogger} from './middleware/logger';
 dotenv.config();
 
 import express from 'express';
@@ -8,6 +9,7 @@ import authRoutes from './routes';
 const app = express();
 const port = Number(process.env.AUTH_PORT) || 8001;
 
+app.use(requestLogger);
 app.use(express.json());
 app.use('/', authRoutes);
 app.use(errorHandler);

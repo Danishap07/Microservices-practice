@@ -10,7 +10,7 @@ RUN npm ci
 COPY packages/shared/ ./packages/shared/
 COPY services/auth/ ./services/auth/
 
-RUN npm run build --workspace=@microservices/shared
+RUN npm run build --workspace=@microkit/shared
 RUN npm run build --workspace=auth
 
 FROM node:22-alpine
