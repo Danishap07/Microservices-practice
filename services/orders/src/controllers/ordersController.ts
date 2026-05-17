@@ -7,7 +7,8 @@ import {
   ForbiddenError,
   NotFoundError,
   validateOrderInput,
-} from '@microservices/shared';
+  logger,
+} from '@microkit/shared';
 
 export async function listOrders(req: Request, res: Response): Promise<void> {
   const repo = AppDataSource.getRepository(Order);
@@ -54,7 +55,7 @@ export async function createOrder(req: Request, res: Response): Promise<void> {
     timestamp: order.createdAt,
   });
 
-  console.log('[Orders] Published order event:', order.id);
+  logger.info('Published order event', { orderId: order.id });
   res.status(201).json(order);
 }
 

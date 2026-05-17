@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, authorize } from '@microservices/shared';
+import { authenticate, authorize } from '@microkit/shared';
 import * as inventoryController from '../controllers/inventoryController';
 
 const router = Router();

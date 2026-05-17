@@ -3,10 +3,11 @@ dotenv.config();
 
 import express from 'express';
 import mongoose from 'mongoose';
-import { createConsumer } from '@microservices/shared';
+import { createConsumer } from '@microkit/shared';
 import { errorHandler } from './middleware/errorHandler';
 import { handleOrderCreated } from './controllers/inventoryController';
 import inventoryRoutes from './routes';
+import { requestLogger } from './middleware/logger';
 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://mongo-inventory:27017/inventory_db')
@@ -16,6 +17,7 @@ mongoose
 const app = express();
 const port = Number(process.env.INVENTORY_PORT) || 8003;
 
+app.use(requestLogger);
 app.use(express.json());
 app.use('/', inventoryRoutes);
 app.use(errorHandler);

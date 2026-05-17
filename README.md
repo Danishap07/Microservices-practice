@@ -1,8 +1,8 @@
-# Practice Microservices
+# MicroKit
 
-A hands-on microservices project with event-driven communication (Kafka), caching (Redis), auth (JWT + RBAC), and an API gateway — all running in Docker.
+**Production-ready microservices starter kit** — event-driven (Kafka), cached (Redis), authenticated (JWT + RBAC), with an API gateway and multiple databases — all in Docker.
 
-## Quick Start
+[![CI](https://github.com/your-org/microkit/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/microkit/actions/workflows/ci.yml)
 
 ```bash
 npm run setup     # install deps + build
@@ -22,19 +22,16 @@ TOKEN=$(curl -s -X POST localhost:8000/auth/login \
   | node -pe "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).token")
 
 # Create a product
-curl -X POST localhost:8000/inventory/p1 \
+curl -X POST localhost:8000/inventory \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"productId":"p1","name":"Widget","price":9.99,"stock":50}'
 
-# Place an order (login as regular user first)
+# Place an order
 curl -X POST localhost:8000/orders \
-  -H "Authorization: Bearer $(...user token...)" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"productId":"p1","quantity":2}'
-
-# Check inventory (stock auto-decremented via Kafka)
-curl localhost:8000/inventory/p1
 ```
 
 ## Developer Commands
@@ -59,9 +56,13 @@ curl localhost:8000/inventory/p1
 
 ## Services
 
-| Service     | Port | Database   | Auth Required | Message                    |
-| ----------- | ---- | ---------- | ------------- | -------------------------- |
-| Auth        | 8001 | In-memory  | No            | —                          |
-| API Gateway | 8000 | —          | —             | Routes to services         |
-| Inventory   | 8003 | MongoDB    | Admin (write)  | Kafka consumer + producer  |
-| Orders      | 8002 | PostgreSQL | Yes           | Kafka producer             |
+| Service     | Port | Database   | Auth Required    | Message                    |
+| ----------- | ---- | ---------- | ---------------- | -------------------------- |
+| Auth        | 8001 | In-memory  | No               | —                          |
+| API Gateway | 8000 | —          | —                | Routes to services         |
+| Inventory   | 8003 | MongoDB    | Admin (write)    | Kafka consumer + producer  |
+| Orders      | 8002 | PostgreSQL | Yes              | Kafka producer             |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) to get started. All contributions welcome!

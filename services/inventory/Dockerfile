@@ -10,7 +10,7 @@ RUN npm ci
 COPY packages/shared/ ./packages/shared/
 COPY services/inventory/ ./services/inventory/
 
-RUN npm run build --workspace=@microservices/shared
+RUN npm run build --workspace=@microkit/shared
 RUN npm run build --workspace=inventory
 
 FROM node:22-alpine

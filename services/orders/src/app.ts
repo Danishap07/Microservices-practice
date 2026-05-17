@@ -6,10 +6,12 @@ import express from 'express';
 import { AppDataSource } from './database';
 import { errorHandler } from './middleware/errorHandler';
 import orderRoutes from './routes';
+import { requestLogger } from './middleware/logger';
 
 const app = express();
 const port = Number(process.env.ORDERS_PORT) || 8002;
 
+app.use(requestLogger);
 app.use(express.json());
 app.use('/', orderRoutes);
 app.use(errorHandler);

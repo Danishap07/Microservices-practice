@@ -10,9 +10,9 @@ import { requestLogger } from './middleware/logger';
 const app = express();
 const port = Number(process.env.GATEWAY_PORT) || 8000;
 
-const INVENTORY_URL = process.env.INVENTORY_URL || 'http://inventory:8003';
-const ORDERS_URL = process.env.ORDERS_URL || 'http://orders:8002';
-const AUTH_URL = process.env.AUTH_URL || 'http://auth:8001';
+const INVENTORY_URL = process.env.INVENTORY_URL || 'http://localhost:8003';
+const ORDERS_URL = process.env.ORDERS_URL || 'http://localhost:8002';
+const AUTH_URL = process.env.AUTH_URL || 'http://localhost:8001';
 
 app.use(requestLogger);
 

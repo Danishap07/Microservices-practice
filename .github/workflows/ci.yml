@@ -20,8 +20,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Lint
-        run: npx eslint . --ext .ts
+        run: npx eslint .
 
       - name: Type check
         run: npm run build --workspaces

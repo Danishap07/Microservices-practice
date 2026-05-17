@@ -5,7 +5,8 @@ import {
   publishEvent,
   BadRequestError,
   NotFoundError,
-} from '@microservices/shared';
+  logger,
+} from '@microkit/shared';
 import { Product } from '../models/Product';
 
 export async function listProducts(_req: Request, res: Response): Promise<void> {
@@ -85,7 +86,7 @@ export async function updateStock(req: Request, res: Response): Promise<void> {
 export async function handleOrderCreated(productId: string, quantity: number): Promise<void> {
   const product = await Product.findOne({ productId });
   if (!product) {
-    console.error(`[Inventory] Product '${productId}' not found — skipping stock update`);
+    logger.error(`Product '${productId}' not found — skipping stock update`);
     return;
   }
 
@@ -94,7 +95,7 @@ export async function handleOrderCreated(productId: string, quantity: number): P
   await product.save();
 
   await cacheSet(`inventory:${productId}`, JSON.stringify(product), 30);
-  console.log(`[Inventory] Stock ${productId}: ${before} → ${product.stock} (order -${quantity})`);
+  logger.info(`Stock ${productId}: ${before} → ${product.stock} (order -${quantity})`);
 
   if (product.stock < 10) {
     await publishEvent('inventory.low_stock', {
@@ -103,6 +104,6 @@ export async function handleOrderCreated(productId: string, quantity: number): P
       remainingStock: product.stock,
       timestamp: new Date().toISOString(),
     });
-    console.log(`[Inventory] Low stock alert for '${productId}': ${product.stock} remaining`);
+    logger.info(`Low stock alert for '${productId}': ${product.stock} remaining`);
   }
 }

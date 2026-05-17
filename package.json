@@ -1,6 +1,5 @@
 {
-  "name": "practice-microservices",
-  "private": true,
+  "name": "microkit",
   "workspaces": [
     "packages/*",
     "services/*"

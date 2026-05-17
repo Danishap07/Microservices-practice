@@ -2,22 +2,27 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
 COPY services/api-gateway/package.json ./services/api-gateway/
 
 RUN npm ci
 
+COPY packages/shared/ ./packages/shared/
 COPY services/api-gateway/ ./services/api-gateway/
 
+RUN npm run build --workspace=@microkit/shared
 RUN npm run build --workspace=api-gateway
 
 FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
 COPY services/api-gateway/package.json ./services/api-gateway/
 
 RUN npm ci --omit=dev
 
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/services/api-gateway/dist ./services/api-gateway/dist
 
 EXPOSE 8000

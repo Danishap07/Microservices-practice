@@ -12,4 +12,5 @@ export {
 export { validateOrderInput, validateProductId } from './validation';
 export { generateToken, verifyToken } from './auth/jwt';
 export { authenticate, authorize } from './auth/middleware';
+export { logger } from './logger';
 export type { UserPayload, OrderCreatedEvent, AppEvent } from './types';

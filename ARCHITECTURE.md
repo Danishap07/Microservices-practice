@@ -2,13 +2,14 @@
 
 ## 1. Project Overview
 
-A microservices e-commerce backend with 3 Node.js services (TypeScript), 4 databases, a message broker (Kafka), and a cache layer (Redis). All services run inside Docker containers orchestrated with Docker Compose.
+A microservices e-commerce backend with 4 Node.js services (TypeScript), 4 databases, a message broker (Kafka), a cache layer (Redis), and JWT auth with RBAC. All services run inside Docker containers orchestrated with Docker Compose.
 
 ### Stack
 
 | Component   | Technology         | Port  |
 | ----------- | ------------------ | ----- |
 | API Gateway | Express + Proxy    | 8000  |
+| Auth        | Express + JWT      | 8001  |
 | Inventory   | Express + Mongoose | 8003  |
 | Orders      | Express + TypeORM  | 8002  |
 | MongoDB     | mongo:7            | 27018 |
@@ -64,7 +65,7 @@ A microservices e-commerce backend with 3 Node.js services (TypeScript), 4 datab
 
 ### 3a. Shared Package (`packages/shared/`)
 
-Reusable code that all services can import. Referenced via npm workspaces as `@microservices/shared`.
+Reusable code that all services can import. Referenced via npm workspaces as `@microkit/shared`.
 
 | File                | Exports                                    | What it does                                                                     |
 | ------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
@@ -80,7 +81,23 @@ All Kafka brokers default to `kafka:9092` (Docker service name). All Redis defau
 
 ---
 
-### 3b. API Gateway (`services/api-gateway/`)
+### 3b. Auth Service (`services/auth/`)
+
+Handles user registration, login, and profile retrieval. Uses JWT tokens for stateless auth and a simple in-memory store with seed users.
+
+**Routes:**
+
+| Method | Path       | Auth Required | Behavior                                          |
+| ------ | ---------- | ------------- | ------------------------------------------------- |
+| POST   | `/register`| No            | Creates a new user, returns JWT                   |
+| POST   | `/login`   | No            | Validates credentials, returns JWT                |
+| GET    | `/me`      | Yes           | Returns current user profile from token           |
+
+**Seed users:** admin (`admin@test.com` / `admin123`, role: `admin`) and user (`user@test.com` / `user123`, role: `user`).
+
+---
+
+### 3c. API Gateway (`services/api-gateway/`)
 
 The single entry point. Every external request hits this first.
 
@@ -91,6 +108,9 @@ The single entry point. Every external request hits this first.
 | `GET /inventory/:id` | strip `/inventory` prefix → proxy | `http://inventory:8003/:id` |
 | `POST /orders`       | strip `/orders` prefix → proxy    | `http://orders:8002/`       |
 | `GET /orders`        | strip `/orders` prefix → proxy    | `http://orders:8002/`       |
+| `POST /auth/login`   | strip `/auth` prefix → proxy      | `http://auth:8001/login`    |
+| `POST /auth/register`| strip `/auth` prefix → proxy      | `http://auth:8001/register` |
+| `GET /auth/me`       | strip `/auth` prefix → proxy      | `http://auth:8001/me`       |
 | `GET /health`        | handled locally                   | —                           |
 | any other            | 404                               | —                           |
 
@@ -100,7 +120,7 @@ The single entry point. Every external request hits this first.
 
 ---
 
-### 3c. Inventory Service (`services/inventory/`)
+### 3d. Inventory Service (`services/inventory/`)
 
 **Startup:**
 
@@ -114,16 +134,17 @@ The single entry point. Every external request hits this first.
 
 | Method | Path          | Behavior                                                                   |
 | ------ | ------------- | -------------------------------------------------------------------------- |
-| GET    | `/`           | Health check response                                                      |
-| GET    | `/:productId` | Check Redis cache first; if miss, return mock stock (50) and cache for 30s |
+| GET    | `/`           | List all products (from MongoDB)                                           |
+| GET    | `/:productId` | Check Redis cache first; if miss, query MongoDB and cache for 30s          |
+| POST   | `/`           | Create product (admin only), publishes `inventory.product.created`         |
+| PUT    | `/:productId/stock` | Update stock (admin only), publishes `inventory.stock.updated`        |
 
 **Cache flow (GET `/:productId`):**
 
 ```
 Request → cacheGet("inventory:p123")
            ├── HAS KEY? → return {stock, source:"cache"}  (fast path)
-           └── MISS?    → return {stock:50, source:"db"}
-                           → cacheSet("inventory:p123", "50", 30)
+           └── MISS?    → query MongoDB → cacheSet(key, value, 30) → return result
 ```
 
 **Kafka consumer:**
@@ -131,14 +152,18 @@ Request → cacheGet("inventory:p123")
 ```
 Listens on "order.created" topic
   ↓
-Parses JSON message → logs it
+Parses JSON message → extracts productId + quantity
   ↓
-(In a real app: decrement stock in MongoDB)
+Decrements stock in MongoDB
+  ↓
+Updates Redis cache
+  ↓
+If stock < 10, publishes "inventory.low_stock" event
 ```
 
 ---
 
-### 3d. Orders Service (`services/orders/`)
+### 3e. Orders Service (`services/orders/`)
 
 **Startup:**
 
@@ -343,11 +368,11 @@ api-gateway ─── depends on ─── inventory, orders
 ## 6. Monorepo Structure (npm Workspaces)
 
 ```
-practice-microservices/
+microkit/
 │
 ├── package.json  (root)       ← "workspaces": ["packages/*", "services/*"]
 ├── packages/
-│   └── shared/                ← @microservices/shared
+│   └── shared/                ← @microkit/shared
 │       ├── package.json
 │       ├── tsconfig.json
 │       └── src/
@@ -358,8 +383,9 @@ practice-microservices/
 │           └── redis/
 │               └── client.ts
 │
-└── services/
+├── services/
     ├── api-gateway/            ← api-gateway
+    ├── auth/                   ← auth
     ├── inventory/              ← inventory
     └── orders/                 ← orders
 ```
@@ -372,19 +398,21 @@ npm install  (at root)
   ├── Installs root devDependencies (prettier)
   ├── Hoists shared dependencies (kafkajs, ioredis) to root node_modules
   ├── Hoists service dependencies (express, mongoose, pg, etc.) to root
-  └── Symlinks @microservices/shared → packages/shared/
+  └── Symlinks @microkit/shared → packages/shared/
         │
         ▼
-  services/inventory/node_modules/@microservices/shared  (symlink)
-  services/orders/node_modules/@microservices/shared     (symlink)
+  services/inventory/node_modules/@microkit/shared  (symlink)
+  services/orders/node_modules/@microkit/shared     (symlink)
+services/auth/node_modules/@microkit/shared       (symlink)
 ```
 
 **Build order matters:**
 
 ```
-npm run build --workspace=@microservices/shared   ← build first
+npm run build --workspace=@microkit/shared   ← build first
 npm run build --workspace=inventory               ← depends on shared
 npm run build --workspace=orders                   ← depends on shared
+npm run build --workspace=auth                      ← depends on shared (JWT middleware)
 npm run build --workspace=api-gateway              ← standalone
 ```
 

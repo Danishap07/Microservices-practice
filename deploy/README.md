@@ -4,10 +4,12 @@ Deploy each service on its own EC2 instance.
 
 ## Architecture
 
+This guide is for the **MicroKit** project — an event-driven microservices starter kit.
+
 ```
                          ┌─────────────────┐
-                         │   API Gateway    │  EC2 #3 (port 80/8000)
-                         │  (nginx/docker)  │
+                         │   API Gateway   │  EC2 #3 (port 80/8000)
+                         │  (nginx/docker) │
                          └────────┬────────┘
                                   │
                ┌──────────────────┼───────────────────┐
